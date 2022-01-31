@@ -104,7 +104,7 @@ function Board({ nrows=5, ncols=5, chanceLightStartsOn=0.5 }) {
   
   /**  Create light grid HTML elements **/
   const lightGrid = (
-    <table>
+    <table className="Board">
       <tbody>
         {board.map(row => {
           rowNum += 1;
