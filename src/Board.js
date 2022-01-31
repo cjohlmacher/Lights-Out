@@ -36,13 +36,51 @@ function Board({ nrows=5, ncols=5, chanceLightStartsOn=0.5 }) {
     let rowCount = 0;
     while (rowCount < nrows) {
       let lightRow = Array.from({length: ncols});
-      lightRow = lightRow.map(cell => Math.random() > 0.5 ? true : false);
+      lightRow = lightRow.map(cell => true);
       initialBoard.push(lightRow);
       rowCount += 1;
     };
+    initialBoard = randomizeLights(initialBoard);
     return initialBoard;
+  };
+
+  /**  Given a board configuration, return a board with flips around cell at coord 'Y-X' **/
+  function flipCellsOfBoard(preboard,coord) {
+    const [y, x] = coord.split("-").map(Number);
+    
+    const flipCell = (y, x, boardCopy) => {
+      // if this coord is actually on board, flip it
+      if (x >= 0 && x < ncols && y >= 0 && y < nrows) {
+        boardCopy[y][x] = !boardCopy[y][x];
+      }
+    };
+
+    const newBoard = preboard.map(row => row.map(cell => cell));
+    const cellsToFlip = [[y,x],[y-1,x],[y+1,x],[y,x-1],[y,x+1]];
+    cellsToFlip.forEach(([y,x]) => flipCell(y,x,newBoard));
+    return newBoard;
   }
 
+  /** Randomize lit/unlit lights **/
+  function randomizeLights(initialBoard) {
+    const targetLit = chanceLightStartsOn*nrows*ncols;
+    let litCount = nrows*ncols;
+    while (litCount  > targetLit) {
+      const [randomY, randomX] = [Math.floor(Math.random()*nrows), Math.floor(Math.random()*ncols)];
+      initialBoard = flipCellsOfBoard(initialBoard,`${randomY}-${randomX}`);
+      litCount = 0;
+      for (let row of initialBoard) {
+        for (let cell of row) {
+          if (cell) {
+            litCount += 1
+          }
+        }
+      };
+    };
+    return initialBoard
+  };
+
+  /** Determine if board is won */
   function hasWon() {
     for (let row of board) {
       for (let cell of row) {
@@ -52,52 +90,45 @@ function Board({ nrows=5, ncols=5, chanceLightStartsOn=0.5 }) {
       }
     };
     return true
-  }
+  };
 
+  /** Set board in state based on flipping cells around coord 'Y-X' **/
   function flipCellsAround(coord) {
-    console.log(board);
     setBoard(oldBoard => {
-      const [y, x] = coord.split("-").map(Number);
-
-      const flipCell = (y, x, boardCopy) => {
-        // if this coord is actually on board, flip it
-        if (x >= 0 && x < ncols && y >= 0 && y < nrows) {
-          boardCopy[y][x] = !boardCopy[y][x];
-        }
-      };
-
-      const newBoard = oldBoard.map(row => row.map(cell => cell));
-      const cellsToFlip = [[y,x],[y-1,x],[y+1,x],[y,x-1],[y,x+1]];
-      cellsToFlip.forEach(([y,x]) => flipCell(y,x,newBoard));
-      return newBoard;
+      return flipCellsOfBoard(oldBoard,coord);
     });
   };
 
   let rowNum=-1;
   let columnNum=-1;
   
-  const lightGrid = board.map(row => {
-    rowNum += 1;
-    columnNum = -1;
-    return (
-      <tr key={rowNum}>
-        {
-        row.map(cell => {
-          columnNum += 1;
-          const key = `${rowNum}-${columnNum}`;
-          return <Cell key={key} flipCellsAroundMe={() => flipCellsAround(key)} isLit={cell} />
-          })
-        }
-      </tr>
-    )
-    });
-
-  return (
+  /**  Create light grid HTML elements **/
+  const lightGrid = (
     <table>
       <tbody>
-        {hasWon() ? <h1>You Win!</h1> : lightGrid}
+        {board.map(row => {
+          rowNum += 1;
+          columnNum = -1;
+          return (
+            <tr key={rowNum}>
+              {
+              row.map(cell => {
+                columnNum += 1;
+                const key = `${rowNum}-${columnNum}`;
+                return <Cell key={key} flipCellsAroundMe={() => flipCellsAround(key)} isLit={cell} />
+                })
+              }
+            </tr>
+          )
+        })}
       </tbody>
     </table>
+  );
+
+  return (
+    <>
+      {hasWon() ? <h1>You Win!</h1> : lightGrid}
+    </>
   )
 }
 
