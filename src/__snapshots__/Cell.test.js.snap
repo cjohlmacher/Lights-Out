@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches snapshot when lit 1`] = `<DocumentFragment />`;
+
+exports[`matches snapshot when unlit 1`] = `<DocumentFragment />`;
